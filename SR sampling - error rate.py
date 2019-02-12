@@ -1,9 +1,24 @@
+##########################################################################################################################
+# This file demonstrates simple random sampling, estimating an error rate                                                #
+# The example loads the SDU data file, computes a number of errors and adds these errors to the account                  #
+# After having added the errors, sampling is repeated, and the corresponding histogram is drawn along with the predicted #
+# distribution.                                                                                                          #
+##########################################################################################################################
+
 import csv
 import numpy as np
 import matplotlib.pyplot as plt
 import pylab
 
 from scipy.stats import norm
+
+# Step 1: Critical parameters
+
+sample_size = 781
+number_of_samples = 100000
+error_rate = 0.03
+
+# Step 2: Read the data
 
 def readcsv(filename):
     ifile = open(filename, "r")
@@ -15,36 +30,33 @@ def readcsv(filename):
         rownum += 1
     ifile.close()
     return a
-# Critical parameters
-
-sample_size = 781
-number_of_samples = 100000
-error_rate = 0.03
 
 SDU_account=readcsv('clean_account_one_percent_discard.csv')
 counter = 0
+
+# Step 3: Introduce errors to the account string.
+#         Additional column stores the errors
 
 while counter < len(SDU_account):
     SDU_account[counter][2] = float(SDU_account[counter][2])
     SDU_account[counter].append(0) #Create column to store errors
     counter += 1
 
-
-# Step 2: Introduce errors to the account string.
-#         Additional column stores the errors
-
 num_of_errors=int(error_rate*len(SDU_account))
 
 # First find out which entries should be in error
 error_list = np.random.choice(len(SDU_account),num_of_errors,replace=False)
 counter = 0
+# Then add the error to the entry
 while counter < num_of_errors:
     SDU_account[error_list[counter]][4]=1
     counter += 1
 
-sample_list = []
 
-# Now extract number_of_samples samples, each of size sample_size
+# Step 4: Perform the sampling.
+#         Extract number_of_samples samples, each of size sample_size
+
+sample_list = []
 counter = 0
 error_count = 0
 while counter < number_of_samples:
@@ -63,9 +75,15 @@ while counter < number_of_samples:
     if counter/1000 == int(counter/1000):
         print(counter)
     counter +=1
+    
 
+# Step 5: Display outcome of sampling to screen
+
+# Compute percentage of samples exceeding materiality limit
 print('Percentage of samples indicating an error rate above 4 percent: ',error_count/number_of_samples)
 
+
+# Print histogram to screen, including predicted pdf of sampling distribution
 n, bins, patches = plt.hist(sample_list, 20, density=True, facecolor='g', alpha=0.75)
 
 x = np.arange(0.01,0.07,0.001)
